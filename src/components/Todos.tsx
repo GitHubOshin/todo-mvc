@@ -1,6 +1,10 @@
-import { ChangeEvent, useMemo, useState } from 'react'
+import { ChangeEvent, useEffect, useMemo, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import '../css/todos.css'
+
+const EMPTY_ARRAY: any[] = []
+const EMPTY_JSON_STRING = '""'
+const TODOS_KEY = 'todos'
 
 interface ITodo {
   id: string
@@ -13,13 +17,26 @@ type FilteredType = 'all' | 'active' | 'completed'
 function Todos(): JSX.Element {
   const [todoText, setTodoText] = useState('')
   const [editTodoText, setEditTodoText] = useState('')
-  const [isAllCompleted, setIsAllCompleted] = useState(false)
 
   const [todos, setTodos] = useState<ITodo[]>([])
 
   const [filteredType, setFilteredType] = useState<FilteredType>('all')
 
   const [editTodoId, setEditTodoId] = useState('')
+
+  useEffect(() => {
+    const todosFromLocalStorage =
+      JSON.parse(window.localStorage.getItem(TODOS_KEY) || EMPTY_JSON_STRING) ||
+      EMPTY_ARRAY
+    setTodos(todosFromLocalStorage)
+  }, [])
+
+  const hasSomeIncomplete = useMemo(() => {
+    return todos.some((todo) => {
+      // return todo.completed === false
+      return !todo.completed // ใช้อันนี้แทนได้เลย เพราะจะเอาอันที่มีค่า false
+    })
+  }, [todos])
 
   // ✅
   function handleOnChangeInputTodo(e: ChangeEvent<HTMLInputElement>) {
@@ -32,30 +49,46 @@ function Todos(): JSX.Element {
     e.preventDefault()
     if (e.key === 'Enter') {
       const newTodo: ITodo = { id: uuidv4(), text: todoText, completed: false }
-      setTodos([...todos, newTodo])
+      const updatedTodos = [...todos, newTodo]
+      window.localStorage.setItem(TODOS_KEY, JSON.stringify(updatedTodos))
+
+      setTodos(updatedTodos)
       setTodoText('')
     }
   }
   // ✅
   function handleRemoveTodo(todoId: string) {
     const remainedTodos: ITodo[] = todos.filter((todo) => todoId !== todo.id)
+    window.localStorage.setItem(TODOS_KEY, JSON.stringify(remainedTodos))
     setTodos(remainedTodos)
   }
 
   // ✅
   function handleUpdateStatus(todoId: string) {
-    const updateTodos = todos.map((todo) =>
+    const updatedTodos = todos.map((todo) =>
       todo.id === todoId ? { ...todo, completed: !todo.completed } : todo
     )
-    setTodos(updateTodos)
+    window.localStorage.setItem(TODOS_KEY, JSON.stringify(updatedTodos))
+    setTodos(updatedTodos)
   }
   // ✅
   function handleClearCompleted() {
-    const clearCompleted = todos.filter((todo) => todo.completed !== true)
-    setTodos(clearCompleted)
+    const clearedCompletedTodos = todos.filter(
+      (todo) => todo.completed !== true
+    )
+
+    window.localStorage.setItem(
+      TODOS_KEY,
+      JSON.stringify(clearedCompletedTodos)
+    )
+    setTodos(clearedCompletedTodos)
   }
 
-  const activatedTodos = todos.filter((todo) => todo.completed === false)
+  // const activatedTodos = todos.filter((todo) => todo.completed === false)
+  const activatedTodos = useMemo(
+    () => todos.filter((todo) => todo.completed === false),
+    [todos]
+  )
 
   // ✅  🥚 EGG
   const filteredTodos: ITodo[] = useMemo(() => {
@@ -82,6 +115,8 @@ function Todos(): JSX.Element {
         }
         return todo
       })
+
+      window.localStorage.setItem(TODOS_KEY, JSON.stringify(updatedTodos))
       setTodos(updatedTodos)
       setEditTodoId('')
 
@@ -90,29 +125,45 @@ function Todos(): JSX.Element {
     }
   }
 
+  function handleCompleteAllTodos() {
+    const updatedTodos = hasSomeIncomplete
+      ? todos.map((todo) => ({ ...todo, completed: true }))
+      : todos.map((todo) => ({ ...todo, completed: false }))
+
+    localStorage.setItem(TODOS_KEY, JSON.stringify(updatedTodos))
+    setTodos(updatedTodos)
+  }
+
   return (
     <div className="todos">
       <h1 className="title-todos">todos</h1>
       <div className="input-new-todo">
-        {/* {todos.length > 0 ? (
-          <button onClick={handleCompletedAll}>
-            {isAllCompleted ? (
+        {todos.length > 0 ? (
+          <button onClick={handleCompleteAllTodos}>
+            {/*isAllCompleted ? (
               <p className="all-completed">❯</p>
             ) : (
-              <p className="all-uncompleted">❯</p>
-            )}
+              <p className="all-incomplete">❯</p>
+            )*/}
+            <p
+              className={
+                !hasSomeIncomplete ? 'all-completed' : 'all-incomplete'
+              }
+            >
+              ❯
+            </p>
           </button>
         ) : (
-          <div className="hide-btn-complete-all"></div>
-        )} */}
-        <div className="hide-btn-complete-all"></div>
+          <div className="hide-btn-complete-all" />
+        )}
         <input
           value={todoText}
           onChange={handleOnChangeInputTodo}
           placeholder="What needs to be done?"
-          onKeyUp={(e) => {
-            handleInputAddTodo(e)
-          }}
+          onKeyUp={handleInputAddTodo}
+          // onKeyUp={(e) => {
+          // handleInputAddTodo(e)
+          // }}
         />
       </div>
 
