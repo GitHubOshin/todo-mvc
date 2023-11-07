@@ -84,7 +84,6 @@ function Todos(): JSX.Element {
     setTodos(clearedCompletedTodos)
   }
 
-  // const activatedTodos = todos.filter((todo) => todo.completed === false)
   const activatedTodos = useMemo(
     () => todos.filter((todo) => todo.completed === false),
     [todos]
@@ -140,11 +139,6 @@ function Todos(): JSX.Element {
       <div className="input-new-todo">
         {todos.length > 0 ? (
           <button onClick={handleCompleteAllTodos}>
-            {/*isAllCompleted ? (
-              <p className="all-completed">❯</p>
-            ) : (
-              <p className="all-incomplete">❯</p>
-            )*/}
             <p
               className={
                 !hasSomeIncomplete ? 'all-completed' : 'all-incomplete'
@@ -161,9 +155,6 @@ function Todos(): JSX.Element {
           onChange={handleOnChangeInputTodo}
           placeholder="What needs to be done?"
           onKeyUp={handleInputAddTodo}
-          // onKeyUp={(e) => {
-          // handleInputAddTodo(e)
-          // }}
         />
       </div>
 
