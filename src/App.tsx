@@ -7,12 +7,12 @@ function App() {
     <>
       <div className="app">
         <Todos />
-        <p className="author">
-          Created by{' '}
-          <a href="#to-linkedin" target="_blank">
-            Ganjanapas Phothong
-          </a>
-        </p>
+        <footer className="author">
+          <p>Double-click to edit a todo</p>
+          <p>
+            Created by <b>Ganjanapas Phothong</b>
+          </p>
+        </footer>
       </div>
     </>
   )
